@@ -25,13 +25,28 @@ struct SpotLight {
     vec3 specular; // Ls
 };
 
+struct PointLight {
+    float constant;
+    float linear;
+    float quadratic;
+
+    vec3 ambient;  // La
+    vec3 diffuse;  // Ld
+    vec3 specular; // Ls
+};
+
 uniform vec3 viewPos;
+uniform int numSpots;
+uniform int numPoints;
 uniform vec3 spotLightPos[24];
+uniform vec3 pointLightPos[24];
 uniform Material material;
 uniform SpotLight spotLight;
+uniform PointLight pointLight;
 uniform bool gamma;
 
 vec3 spotLightCalc(int lightIndex, vec3 viewDir, vec3 normal);
+vec3 pointLightCalc(int lightIndex, vec3 viewDir, vec3 normal);
 
 void main()
 {
@@ -40,11 +55,15 @@ void main()
     vec3 normal = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    for (int i = 0; i < 24; i++)
+    for (int i = 0; i < numSpots; i++)
     {
         color += spotLightCalc(i, viewDir, normal);
     }
 
+    for (int i = 0; i < numPoints; i++)
+    {
+        color += pointLightCalc(i, viewDir, normal);
+    }
 
     if(gamma)
         color = pow(color, vec3(1.0/2.2));
@@ -87,8 +106,36 @@ vec3 spotLightCalc(int lightIndex, vec3 viewDir, vec3 normal)
     specular *= attenuation;
 
     return(ambient + diffuse + specular);
-
 }
 
+vec3 pointLightCalc(int lightIndex, vec3 viewDir, vec3 normal)
+{
+    // Ambient
+    vec3 ambient = pointLight.ambient * material.ambient;
+
+    // Diffuse
+    vec3 lightDir = normalize(pointLightPos[lightIndex] - FragPos);
+    float diff = max(dot(lightDir, normal), 0.0);
+    vec3 diffuse = diff * pointLight.diffuse * material.diffuse;
+
+    // Specular
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = 0.0;
+
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
+    vec3 specular = pointLight.specular * material.specular * spec;
+
+    // Attenuation
+    float distance    = length(pointLightPos[lightIndex] - FragPos);
+    float attenuation = 1.0f / (pointLight.constant + pointLight.linear * distance +
+                        pointLight.quadratic * (distance * distance));
+
+    ambient  *= attenuation;
+    diffuse  *= attenuation;
+    specular *= attenuation;
+
+    return(ambient + diffuse + specular);
+}
 
 

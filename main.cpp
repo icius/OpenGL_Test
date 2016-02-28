@@ -133,31 +133,13 @@ int main()
     VBOTorus torus(0.7f, 0.3f, 60, 60);
     VBOPlane plane(15.0f, 15.0f, 1, 1, 4.0f, 4.0f);
 
-    glm::vec3 *lightPositions = new glm::vec3[24] {
-        glm::vec3(-5.5, 2.5f, -6.0f),
-        glm::vec3(-3.5, 2.5f, -6.0f),
-        glm::vec3(-1.5f, 2.5f, -6.0f),
-        glm::vec3(1.5f, 2.5f, -6.0f),
-        glm::vec3(3.5f, 2.5f, -6.0f),
-        glm::vec3(5.5f, 2.5f, -6.0f),
-        glm::vec3(-5.5, 2.5f, -2.0f),
-        glm::vec3(-3.5, 2.5f, -2.0f),
-        glm::vec3(-1.5f, 2.5f, -2.0f),
-        glm::vec3(1.5f, 2.5f, -2.0f),
-        glm::vec3(3.5f, 2.5f, -2.0f),
-        glm::vec3(5.5f, 2.5f, -2.0f),
-        glm::vec3(-5.5, 2.5f, 2.0f),
-        glm::vec3(-3.5, 2.5f, 2.0f),
-        glm::vec3(-1.5f, 2.5f, 2.0f),
-        glm::vec3(1.5f, 2.5f, 2.0f),
-        glm::vec3(3.5f, 2.5f, 2.0f),
-        glm::vec3(5.5f, 2.5f, 2.0f),
-        glm::vec3(-5.5, 2.5f, 6.0f),
-        glm::vec3(-3.5, 2.5f, 6.0f),
-        glm::vec3(-1.5f, 2.5f, 6.0f),
-        glm::vec3(1.5f, 2.5f, 6.0f),
-        glm::vec3(3.5f, 2.5f, 6.0f),
-        glm::vec3(5.5f, 2.5f, 6.0f)
+    glm::vec3 *pointLightPos = new glm::vec3[6] {
+        glm::vec3(-3.5f, 2.5f, -4.0f),
+        glm::vec3( 3.5f, 2.5f, -4.0f),
+        glm::vec3(-3.5f, 2.5f,  0.0f),
+        glm::vec3( 3.5f, 2.5f,  0.0f),
+        glm::vec3(-3.5f, 2.5f, 4.0f),
+        glm::vec3( 3.5f, 2.5f, 4.0f)
     };
 
     Model diamond("models/diamond.obj");
@@ -251,6 +233,20 @@ int main()
 
     diamondShader.use();
 
+    diamondShader.setUniform("numPoints", 6);
+    diamondShader.setUniform("pointLight.constant", 1.0f);
+    diamondShader.setUniform("pointLight.linear", 0.09f);
+    diamondShader.setUniform("pointLight.quadratic", 0.032f);
+
+    diamondShader.setUniform("pointLight.ambient", glm::vec3(0.08f) * halogen);
+    diamondShader.setUniform("pointLight.diffuse", glm::vec3(0.7f) * halogen);
+    diamondShader.setUniform("pointLight.specular", glm::vec3(2.0f) * halogen);
+
+    glUniform3fv(glGetUniformLocation(diamondShader.getHandle(),
+                 "pointLightPos"), 24, glm::value_ptr(pointLightPos[0]));
+
+    /*
+    diamondShader.setUniform("numSpots", 24);
     diamondShader.setUniform("spotLight.direction", 0.0f, -1.0f, 0.0f);
     diamondShader.setUniform("spotLight.constant", 1.0f);
     diamondShader.setUniform("spotLight.linear", 0.09f);
@@ -264,6 +260,10 @@ int main()
 
     glUniform3fv(glGetUniformLocation(diamondShader.getHandle(),
                  "spotLightPos"), 24, glm::value_ptr(lightPositions[0]));
+
+    */
+
+
 
     glm::mat4 model;
 
@@ -312,10 +312,10 @@ int main()
         lampShader.setUniform("view", view);
         lampShader.setUniform("projection", projection);
 
-        for(int x=0; x < 24; x++)
+        for(int x=0; x < 6; x++)
         {
             model = glm::mat4();
-            model = glm::translate(model, lightPositions[x]);
+            model = glm::translate(model, pointLightPos[x]);
             model = glm::scale(model, glm::vec3(0.2f));
             lampShader.setUniform("model", model);
             cube.render();
