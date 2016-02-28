@@ -251,19 +251,19 @@ int main()
 
     diamondShader.use();
 
-    diamondShader.setUniform("light.direction", 0.0f, -1.0f, 0.0f);
-    diamondShader.setUniform("light.constant", 1.0f);
-    diamondShader.setUniform("light.linear", 0.09f);
-    diamondShader.setUniform("light.quadratic", 0.032f);
-    diamondShader.setUniform("light.cutOff", glm::cos(glm::radians(18.0f)));
-    diamondShader.setUniform("light.outerCutOff", glm::cos(glm::radians(28.0f)));
+    diamondShader.setUniform("spotLight.direction", 0.0f, -1.0f, 0.0f);
+    diamondShader.setUniform("spotLight.constant", 1.0f);
+    diamondShader.setUniform("spotLight.linear", 0.09f);
+    diamondShader.setUniform("spotLight.quadratic", 0.032f);
+    diamondShader.setUniform("spotLight.cutOff", glm::cos(glm::radians(18.0f)));
+    diamondShader.setUniform("spotLight.outerCutOff", glm::cos(glm::radians(28.0f)));
 
-    diamondShader.setUniform("light.ambient", glm::vec3(0.08f) * halogen);
-    diamondShader.setUniform("light.diffuse", glm::vec3(0.7f) * halogen);
-    diamondShader.setUniform("light.specular", glm::vec3(2.0f) * halogen);
+    diamondShader.setUniform("spotLight.ambient", glm::vec3(0.08f) * halogen);
+    diamondShader.setUniform("spotLight.diffuse", glm::vec3(0.7f) * halogen);
+    diamondShader.setUniform("spotLight.specular", glm::vec3(2.0f) * halogen);
 
     glUniform3fv(glGetUniformLocation(diamondShader.getHandle(),
-                 "lightPositions"), 24, glm::value_ptr(lightPositions[0]));
+                 "spotLightPos"), 24, glm::value_ptr(lightPositions[0]));
 
     glm::mat4 model;
 
