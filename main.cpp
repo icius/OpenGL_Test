@@ -215,6 +215,20 @@ int main()
     floorShader.setUniform("material.diffuse", 0);
     floorShader.setUniform("material.specular", 1);
 
+    floorShader.setUniform("numPoints", 6);
+    floorShader.setUniform("pointLight.constant", 1.0f);
+    floorShader.setUniform("pointLight.linear", 0.09f);
+    floorShader.setUniform("pointLight.quadratic", 0.032f);
+
+    floorShader.setUniform("pointLight.ambient", glm::vec3(0.08f) * halogen);
+    floorShader.setUniform("pointLight.diffuse", glm::vec3(0.7f) * halogen);
+    floorShader.setUniform("pointLight.specular", glm::vec3(2.0f) * halogen);
+
+    floorShader.setUniform("material.shininess", 128.0f);
+    glUniform3fv(glGetUniformLocation(floorShader.getHandle(), "pointLightPos")
+                 , 6, glm::value_ptr(pointLightPos[0]));
+
+    /*
     floorShader.setUniform("light.direction", 0.0f, -1.0f, 0.0f);
     floorShader.setUniform("light.constant", 1.0f);
     floorShader.setUniform("light.linear", 0.09f);
@@ -229,7 +243,7 @@ int main()
     floorShader.setUniform("material.shininess", 128.0f);
     glUniform3fv(glGetUniformLocation(floorShader.getHandle(), "lightPositions")
                  , 24, glm::value_ptr(lightPositions[0]));
-
+    */
 
     diamondShader.use();
 
@@ -243,7 +257,7 @@ int main()
     diamondShader.setUniform("pointLight.specular", glm::vec3(2.0f) * halogen);
 
     glUniform3fv(glGetUniformLocation(diamondShader.getHandle(),
-                 "pointLightPos"), 24, glm::value_ptr(pointLightPos[0]));
+                 "pointLightPos"), 6, glm::value_ptr(pointLightPos[0]));
 
     /*
     diamondShader.setUniform("numSpots", 24);

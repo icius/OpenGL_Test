@@ -5,9 +5,9 @@ in vec3 Normal;
 in vec3 FragPos;
 
 struct Material {
-    vec3 ambient;  // Ka
-    vec3 diffuse;  // Kd
-    vec3 specular; // Ks
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
     float shininess;
 };
 
@@ -20,9 +20,9 @@ struct SpotLight {
     float linear;
     float quadratic;
 
-    vec3 ambient;  // La
-    vec3 diffuse;  // Ld
-    vec3 specular; // Ls
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 };
 
 struct PointLight {
@@ -30,16 +30,16 @@ struct PointLight {
     float linear;
     float quadratic;
 
-    vec3 ambient;  // La
-    vec3 diffuse;  // Ld
-    vec3 specular; // Ls
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 };
 
 uniform vec3 viewPos;
 uniform int numSpots;
 uniform int numPoints;
-uniform vec3 spotLightPos[24];
-uniform vec3 pointLightPos[24];
+uniform vec3 spotLightPos[10];
+uniform vec3 pointLightPos[10];
 uniform Material material;
 uniform SpotLight spotLight;
 uniform PointLight pointLight;
