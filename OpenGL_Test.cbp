@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="OpenGL_Test" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Chapter_002" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-std=c++11" />
+					<Add option="-g" />
+					<Add directory="/usr/local/include" />
+					<Add directory="/usr/include/freetype2" />
+					<Add directory="../include" />
+				</Compiler>
+				<Linker>
+					<Add library="glfw3" />
+					<Add library="GL" />
+					<Add library="X11" />
+					<Add library="pthread" />
+					<Add library="Xrandr" />
+					<Add library="Xi" />
+					<Add library="dl" />
+					<Add library="Xinerama" />
+					<Add library="Xcursor" />
+					<Add library="Xxf86vm" />
+					<Add library="SOIL" />
+					<Add library="assimp" />
+					<Add library="freetype" />
+					<Add library="freeimage" />
+					<Add directory="/usr/local/lib" />
+					<Add directory="/usr/lib64" />
+					<Add directory="../lib" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Chapter_002" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="Camera.h" />
+		<Unit filename="Mesh.h" />
+		<Unit filename="Model.h" />
+		<Unit filename="Standard_Materials.h" />
+		<Unit filename="Text.h" />
+		<Unit filename="cookbookogl.h" />
+		<Unit filename="csv.h" />
+		<Unit filename="drawable.cpp" />
+		<Unit filename="drawable.h" />
+		<Unit filename="fonts/Arial.ttf" />
+		<Unit filename="gl_core_4_3.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="gl_core_4_3.h" />
+		<Unit filename="glslprogram.cpp" />
+		<Unit filename="glslprogram.h" />
+		<Unit filename="glutils.cpp" />
+		<Unit filename="glutils.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="shaders/ADS.frag" />
+		<Unit filename="shaders/ADS.vert" />
+		<Unit filename="shaders/ADSMulti.frag" />
+		<Unit filename="shaders/ADSMulti.vert" />
+		<Unit filename="shaders/ADSMultiSpot.frag" />
+		<Unit filename="shaders/ADSMultiSpot.vert" />
+		<Unit filename="shaders/ADSTex.frag" />
+		<Unit filename="shaders/ADSTex.vert" />
+		<Unit filename="shaders/ADSTexMulti.frag" />
+		<Unit filename="shaders/ADSTexMulti.vert" />
+		<Unit filename="shaders/ADSTexMultiSpot.frag" />
+		<Unit filename="shaders/ADSTexMultiSpot.vert" />
+		<Unit filename="shaders/lamp.frag" />
+		<Unit filename="shaders/lamp.vert" />
+		<Unit filename="shaders/text.frag" />
+		<Unit filename="shaders/text.vert" />
+		<Unit filename="textures/wood.png" />
+		<Unit filename="vbocube.cpp" />
+		<Unit filename="vbocube.h" />
+		<Unit filename="vboplane.cpp" />
+		<Unit filename="vboplane.h" />
+		<Unit filename="vbotorus.cpp" />
+		<Unit filename="vbotorus.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
