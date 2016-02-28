@@ -173,7 +173,7 @@ int main()
         glm::vec3(5.5f, 2.5f, 6.0f)
     };
 
-    Model diamond("models/matObj.obj");
+    Model diamond("models/diamond.obj");
 
     glm::vec3 *matObjPositions = new glm::vec3[24] {
         glm::vec3(-5.5, 0.0f, -6.0f),
