@@ -53,21 +53,10 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 GLfloat frameRate = 1000.0f;
 
-// World coordinates of a single light
-glm::vec3 lightPos( -3.5f,  2.5f, -4.0f);
-
 glm::vec3 halogen(1.0f, 0.945098039f, 0.878431373f);
+glm::vec3 overcast(0.788235294f, 0.88627451f, 1.0f);
+glm::vec3 tungsten100W(1.0f, 0.850980392f, 0.666666667f);
 
-//glm::vec3 halogen(1.0f, 0.839215686f, 0.666666667f);
-
-struct Light {
-    glm::vec3 position;
-    glm::vec3 ambient;  // La
-    glm::vec3 diffuse;  // Ld
-    glm::vec3 specular; // Ls
-};
-
-// The MAIN function, from here we start our application and run our Game loop
 int main()
 {
 
@@ -89,7 +78,6 @@ int main()
 
     int loaded = ogl_LoadFunctions();
     if(loaded == ogl_LOAD_FAILED) {
-        //Destroy the context and abort
         return 0;
     }
     int num_failed = loaded - ogl_LOAD_SUCCEEDED;
@@ -121,54 +109,55 @@ int main()
     // Draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    GLSLProgram lampShader, floorShader, textShader, testShader, adsShader, diamondShader;
+    GLSLProgram lampShader, floorShader, wallShader, textShader, testShader, adsShader, diamondShader;
 
     lampShader.init("shaders/lamp.vert","shaders/lamp.frag");
     floorShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
+    wallShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
     textShader.init("shaders/text.vert","shaders/text.frag");
-    adsShader.init("shaders/ADSMultiSpot.vert", "shaders/ADSMultiSpot.frag");
     diamondShader.init("shaders/ADSMultiSpot.vert","shaders/ADSMultiSpot.frag");
 
     VBOCube cube;
     VBOTorus torus(0.7f, 0.3f, 60, 60);
-    VBOPlane plane(15.0f, 15.0f, 1, 1, 4.0f, 4.0f);
-
-    glm::vec3 *pointLightPos = new glm::vec3[6] {
-        glm::vec3(-3.5f, 2.5f, -4.0f),
-        glm::vec3( 3.5f, 2.5f, -4.0f),
-        glm::vec3(-3.5f, 2.5f,  0.0f),
-        glm::vec3( 3.5f, 2.5f,  0.0f),
-        glm::vec3(-3.5f, 2.5f, 4.0f),
-        glm::vec3( 3.5f, 2.5f, 4.0f)
-    };
+    VBOPlane floor(15.0f, 15.0f, 1, 1, 6.0f, 6.0f);
+    VBOPlane wall(15.0f, 6.0f, 1, 1, 8.0f, 8.0f);
 
     Model diamond("models/diamond.obj");
 
+    glm::vec3 *pointLightPos = new glm::vec3[6] {
+        glm::vec3(-3.5f,  4.9f, -4.0f),
+        glm::vec3( 3.5f,  4.9f, -4.0f),
+        glm::vec3(-3.5f,  4.9f,  0.0f),
+        glm::vec3( 3.5f,  4.9f,  0.0f),
+        glm::vec3(-3.5f,  4.9f,  4.0f),
+        glm::vec3( 3.5f,  4.9f,  4.0f)
+    };
+
     glm::vec3 *matObjPositions = new glm::vec3[24] {
-        glm::vec3(-5.5, 0.0f, -6.0f),
-        glm::vec3(-3.5, 0.0f, -6.0f),
-        glm::vec3(-1.5f, 0.0f, -6.0f),
-        glm::vec3(1.5f, 0.0f, -6.0f),
-        glm::vec3(3.5f, 0.0f, -6.0f),
-        glm::vec3(5.5f, 0.0f, -6.0f),
-        glm::vec3(-5.5, 0.0f, -2.0f),
-        glm::vec3(-3.5, 0.0f, -2.0f),
-        glm::vec3(-1.5f, 0.0f, -2.0f),
-        glm::vec3(1.5f, 0.0f, -2.0f),
-        glm::vec3(3.5f, 0.0f, -2.0f),
-        glm::vec3(5.5f, 0.0f, -2.0f),
-        glm::vec3(-5.5, 0.0f, 2.0f),
-        glm::vec3(-3.5, 0.0f, 2.0f),
-        glm::vec3(-1.5f, 0.0f, 2.0f),
-        glm::vec3(1.5f, 0.0f, 2.0f),
-        glm::vec3(3.5f, 0.0f, 2.0f),
-        glm::vec3(5.5f, 0.0f, 2.0f),
-        glm::vec3(-5.5, 0.0f, 6.0f),
-        glm::vec3(-3.5, 0.0f, 6.0f),
-        glm::vec3(-1.5f, 0.0f, 6.0f),
-        glm::vec3(1.5f, 0.0f, 6.0f),
-        glm::vec3(3.5f, 0.0f, 6.0f),
-        glm::vec3(5.5f, 0.0f, 6.0f)
+        glm::vec3(-5.5f,  0.0f, -6.0f),
+        glm::vec3(-3.5f,  0.0f, -6.0f),
+        glm::vec3(-1.5f,  0.0f, -6.0f),
+        glm::vec3( 1.5f,  0.0f, -6.0f),
+        glm::vec3( 3.5f,  0.0f, -6.0f),
+        glm::vec3( 5.5f,  0.0f, -6.0f),
+        glm::vec3(-5.5f,  0.0f, -2.0f),
+        glm::vec3(-3.5f,  0.0f, -2.0f),
+        glm::vec3(-1.5f,  0.0f, -2.0f),
+        glm::vec3( 1.5f,  0.0f, -2.0f),
+        glm::vec3( 3.5f,  0.0f, -2.0f),
+        glm::vec3( 5.5f,  0.0f, -2.0f),
+        glm::vec3(-5.5f,  0.0f,  2.0f),
+        glm::vec3(-3.5f,  0.0f,  2.0f),
+        glm::vec3(-1.5f,  0.0f,  2.0f),
+        glm::vec3( 1.5f,  0.0f,  2.0f),
+        glm::vec3( 3.5f,  0.0f,  2.0f),
+        glm::vec3( 5.5f,  0.0f,  2.0f),
+        glm::vec3(-5.5f,  0.0f,  6.0f),
+        glm::vec3(-3.5f,  0.0f,  6.0f),
+        glm::vec3(-1.5f,  0.0f,  6.0f),
+        glm::vec3( 1.5f,  0.0f,  6.0f),
+        glm::vec3( 3.5f,  0.0f,  6.0f),
+        glm::vec3( 5.5f,  0.0f,  6.0f)
     };
 
     string matList[] =  {
@@ -207,11 +196,15 @@ int main()
                        screenHeight);
 
     // Load textures
-    GLuint floorTexture = loadTexture((char *)"textures/wood.png", true);
+    GLuint floorTexture = loadTexture((char *)"textures/wood2.png", true);
     GLuint floorSpec = loadTexture((char *)"textures/wood_spec.png");
+    GLuint wallTexture = loadTexture((char *)"textures/stucco.png", true);
+    GLuint wallSpec = loadTexture((char *)"textures/stucco_spec.png");
 
     // Set texture units
     floorShader.use();
+
+    floorShader.setUniform("gamma", true);
     floorShader.setUniform("material.diffuse", 0);
     floorShader.setUniform("material.specular", 1);
 
@@ -228,24 +221,34 @@ int main()
     glUniform3fv(glGetUniformLocation(floorShader.getHandle(), "pointLightPos")
                  , 6, glm::value_ptr(pointLightPos[0]));
 
-    /*
-    floorShader.setUniform("light.direction", 0.0f, -1.0f, 0.0f);
-    floorShader.setUniform("light.constant", 1.0f);
-    floorShader.setUniform("light.linear", 0.09f);
-    floorShader.setUniform("light.quadratic", 0.032f);
-    floorShader.setUniform("light.cutOff", glm::cos(glm::radians(18.0f)));
-    floorShader.setUniform("light.outerCutOff", glm::cos(glm::radians(28.0f)));
 
-    floorShader.setUniform("light.ambient", glm::vec3(0.08f) * halogen);
-    floorShader.setUniform("light.diffuse", glm::vec3(0.7f) * halogen);
-    floorShader.setUniform("light.specular", glm::vec3(2.0f) * halogen);
+    wallShader.use();
 
-    floorShader.setUniform("material.shininess", 128.0f);
-    glUniform3fv(glGetUniformLocation(floorShader.getHandle(), "lightPositions")
-                 , 24, glm::value_ptr(lightPositions[0]));
-    */
+    wallShader.setUniform("gamma", true);
+    wallShader.setUniform("material.diffuse", 0);
+    wallShader.setUniform("material.specular", 1);
+
+    wallShader.setUniform("numPoints", 6);
+    wallShader.setUniform("pointLight.constant", 1.0f);
+    wallShader.setUniform("pointLight.linear", 0.09f);
+    wallShader.setUniform("pointLight.quadratic", 0.032f);
+
+    wallShader.setUniform("pointLight.ambient", glm::vec3(0.08f) * halogen);
+    wallShader.setUniform("pointLight.diffuse", glm::vec3(0.3f) * halogen);
+    wallShader.setUniform("pointLight.specular", glm::vec3(0.5f) * halogen);
+
+    wallShader.setUniform("material.shininess", 1.0f);
+    glUniform3fv(glGetUniformLocation(wallShader.getHandle(), "pointLightPos")
+                 , 6, glm::value_ptr(pointLightPos[0]));
 
     diamondShader.use();
+
+    diamondShader.setUniform("numDirs", 1);
+    diamondShader.setUniform("dirLight.direction", glm::vec3(0.0f, 1.0f, 0.0f));
+    diamondShader.setUniform("dirLight.ambient", glm::vec3(0.08f) * tungsten100W);
+    diamondShader.setUniform("dirLight.diffuse", glm::vec3(0.5f) * tungsten100W);
+    diamondShader.setUniform("dirLight.specular", glm::vec3(0.5f) * tungsten100W);
+
 
     diamondShader.setUniform("numPoints", 6);
     diamondShader.setUniform("pointLight.constant", 1.0f);
@@ -277,11 +280,7 @@ int main()
 
     */
 
-
-
     glm::mat4 model;
-
-
 
     // Game loop
     while(!glfwWindowShouldClose(window))
@@ -364,7 +363,57 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, floorSpec);
 
-        plane.render();
+        floor.render();
+
+
+        //------ Setup and Render the Walls ------
+
+        wallShader.use();
+
+        wallShader.setUniform("projection", projection);
+        wallShader.setUniform("view", view);
+        wallShader.setUniform("viewPos", camera.Position);
+
+        // Bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, wallTexture);
+        // Bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, wallSpec);
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(0.0f, 2.0f, -7.5f));
+        model *= glm::rotate(glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+        wallShader.setUniform("model", model);
+        wall.render();
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(-7.5f, 2.0f, 0.0f));
+        model *= glm::rotate(glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+        model *= glm::rotate(glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+        wallShader.setUniform("model", model);
+        wall.render();
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(7.5f, 2.0f, 0.0f));
+        model *= glm::rotate(glm::radians(-90.0f), vec3(0.0f, 1.0f, 0.0f));
+        model *= glm::rotate(glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+        wallShader.setUniform("model", model);
+        wall.render();
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(0.0f, 2.0f, 7.5f));
+        model *= glm::rotate(glm::radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
+        model *= glm::rotate(glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
+        wallShader.setUniform("model", model);
+        wall.render();
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(0.0f, 5.0f, 0.0f));
+        model *= glm::rotate(glm::radians(180.0f), vec3(1.0f, 0.0f, 0.0f));
+        wallShader.setUniform("model", model);
+        floor.render();
+
 
 
         //------ Setup and Render the Diamonds ------
