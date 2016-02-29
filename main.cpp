@@ -42,6 +42,7 @@ void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 void doMovement();
 GLuint loadTexture(GLchar* path, bool sRGB = false);
+void RenderQuad();
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 4.0f));
@@ -56,6 +57,10 @@ GLfloat frameRate = 1000.0f;
 glm::vec3 halogen(1.0f, 0.945098039f, 0.878431373f);
 glm::vec3 overcast(0.788235294f, 0.88627451f, 1.0f);
 glm::vec3 tungsten100W(1.0f, 0.850980392f, 0.666666667f);
+
+// Light source
+glm::vec3 lightPos(0.0f, 5.0f, 0.0f);
+
 
 int main()
 {
@@ -110,14 +115,15 @@ int main()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     GLSLProgram lampShader, floorShader, wallShader, textShader, diamondShader,
-                depthShader;
+                depthShader, debugDepthQuad;
 
     lampShader.init("shaders/lamp.vert","shaders/lamp.frag");
-    floorShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
-    wallShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
+    floorShader.init("shaders/MultiLightTexShadow.vert","shaders/MultiLightTexShadow.frag");
+    wallShader.init("shaders/MultiLightTex.vert","shaders/MultiLightTex.frag");
     textShader.init("shaders/text.vert","shaders/text.frag");
-    diamondShader.init("shaders/ADSMultiSpot.vert","shaders/ADSMultiSpot.frag");
+    diamondShader.init("shaders/MultiLight.vert","shaders/MultiLight.frag");
     depthShader.init("shaders/SimpleDepth.vert","shaders/SimpleDepth.frag");
+    debugDepthQuad.init("shaders/depthMap.vert","shaders/depthMap.frag");
 
     VBOCube cube;
     VBOTorus torus(0.7f, 0.3f, 60, 60);
@@ -231,6 +237,8 @@ int main()
     floorShader.setUniform("gamma", true);
     floorShader.setUniform("material.diffuse", 0);
     floorShader.setUniform("material.specular", 1);
+    floorShader.setUniform("shadowMap", 3);
+    floorShader.setUniform("lightPos", lightPos);
 
     floorShader.setUniform("numPoints", 6);
     floorShader.setUniform("pointLight.constant", 1.0f);
@@ -306,6 +314,8 @@ int main()
 
     glm::mat4 model;
 
+
+
     // Game loop
     while(!glfwWindowShouldClose(window))
     {
@@ -342,13 +352,17 @@ int main()
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
 
-        GLfloat near_plane = 1.0f, far_plane = 7.5f;
+        GLfloat near_plane = 1.0f, far_plane = 7.0f;
 
-        lightProjection = glm::perspective(45.0f, (GLfloat)SHADOW_WIDTH /
-                                           (GLfloat)SHADOW_HEIGHT, near_plane,
-                                           far_plane);
+        //lightProjection = glm::perspective(glm::radians(100.0f), (GLfloat)SHADOW_WIDTH /
+        //                                   (GLfloat)SHADOW_HEIGHT, near_plane,
+        //                                   far_plane);
 
-        lightView = glm::lookAt(pointLightPos[0], glm::vec3(0.0f), glm::vec3(1.0));
+        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(1.0));
+
+        //lightView = glm::lookAt(pointLightPos[0], glm::vec3(pointLightPos[0].x, -1.0f, pointLightPos[0].z), glm::vec3(1.0));
         lightSpaceMatrix = lightProjection * lightView;
 
         //------ Setup and Render the Floor ------
@@ -382,11 +396,10 @@ int main()
 
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, screenWidth, screenHeight);
 
 
         // ------ Normal Render Pass ------ //
-
-        glViewport(0, 0, screenWidth, screenHeight);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
                                                 (float)screenWidth/
@@ -434,12 +447,16 @@ int main()
         floorShader.setUniform("model", model);
         floorShader.setUniform("viewPos", camera.Position);
 
+        floorShader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
+
         // Bind diffuse map
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
         // Bind specular map
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, floorSpec);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
 
         floor.render();
 
@@ -519,6 +536,18 @@ int main()
             diamond.Draw(diamondShader);
         }
 
+/*
+
+
+        // Render Depth map to quad
+        debugDepthQuad.use();
+        glUniform1f(glGetUniformLocation(debugDepthQuad.getHandle(), "near_plane"), near_plane);
+        glUniform1f(glGetUniformLocation(debugDepthQuad.getHandle(), "far_plane"), far_plane);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        RenderQuad();
+
+*/
         glfwSwapBuffers(window);
     }
 
@@ -641,4 +670,35 @@ void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 {
     // Convert GLenum parameters to strings
     printf("%d:%d[%d](%d): %s\n", source, type, severity, id, message);
+}
+
+// RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
+// and post-processing effects.
+GLuint quadVAO = 0;
+GLuint quadVBO;
+void RenderQuad()
+{
+    if (quadVAO == 0)
+    {
+        GLfloat quadVertices[] = {
+            // Positions        // Texture Coords
+            -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+        };
+        // Setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }
