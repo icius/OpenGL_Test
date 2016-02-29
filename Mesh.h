@@ -47,39 +47,46 @@ public:
     }
 
     // Render the mesh
-    void Draw(GLSLProgram &shader)
+    void Draw(GLSLProgram &shader, bool shadow = false)
     {
-        // Bind appropriate textures
-        GLuint diffuseNr = 1;
-        GLuint specularNr = 1;
-        for(GLuint i = 0; i < this->textures.size(); i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i); // Active proper texture unit before binding
-            // Retrieve texture number (the N in diffuse_textureN)
-            stringstream ss;
-            string number;
-            string name = this->textures[i].type;
-            if(name == "texture_diffuse")
-                ss << diffuseNr++; // Transfer GLuint to stream
-            else if(name == "texture_specular")
-                ss << specularNr++; // Transfer GLuint to stream
-            number = ss.str();
-            // Now set the sampler to the correct texture unit
-            glUniform1i(glGetUniformLocation(shader.getHandle(), (name + number).c_str()), i);
-            // And finally bind the texture
-            glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
-        }
 
+        if(!shadow)
+        {
+            // Bind appropriate textures
+            GLuint diffuseNr = 1;
+            GLuint specularNr = 1;
+            for(GLuint i = 0; i < this->textures.size(); i++)
+            {
+                glActiveTexture(GL_TEXTURE0 + i); // Active proper texture unit before binding
+                // Retrieve texture number (the N in diffuse_textureN)
+                stringstream ss;
+                string number;
+                string name = this->textures[i].type;
+                if(name == "texture_diffuse")
+                    ss << diffuseNr++; // Transfer GLuint to stream
+                else if(name == "texture_specular")
+                    ss << specularNr++; // Transfer GLuint to stream
+                number = ss.str();
+                // Now set the sampler to the correct texture unit
+                glUniform1i(glGetUniformLocation(shader.getHandle(), (name + number).c_str()), i);
+                // And finally bind the texture
+                glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
+            }
+        }
         // Draw mesh
         glBindVertexArray(this->VAO);
         glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // Always good practice to set everything back to defaults once configured.
-        for (GLuint i = 0; i < this->textures.size(); i++)
+
+        if(!shadow)
         {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
+            // Always good practice to set everything back to defaults once configured.
+            for (GLuint i = 0; i < this->textures.size(); i++)
+            {
+                glActiveTexture(GL_TEXTURE0 + i);
+                glBindTexture(GL_TEXTURE_2D, 0);
+            }
         }
     }
 

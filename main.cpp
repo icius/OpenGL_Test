@@ -107,20 +107,44 @@ int main()
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
     // Draw in wireframe
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    GLSLProgram lampShader, floorShader, wallShader, textShader, testShader, adsShader, diamondShader;
+    GLSLProgram lampShader, floorShader, wallShader, textShader, diamondShader,
+                depthShader;
 
     lampShader.init("shaders/lamp.vert","shaders/lamp.frag");
     floorShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
     wallShader.init("shaders/ADSTexMultiSpot.vert","shaders/ADSTexMultiSpot.frag");
     textShader.init("shaders/text.vert","shaders/text.frag");
     diamondShader.init("shaders/ADSMultiSpot.vert","shaders/ADSMultiSpot.frag");
+    depthShader.init("shaders/SimpleDepth.vert","shaders/SimpleDepth.frag");
 
     VBOCube cube;
     VBOTorus torus(0.7f, 0.3f, 60, 60);
     VBOPlane floor(15.0f, 15.0f, 1, 1, 6.0f, 6.0f);
     VBOPlane wall(15.0f, 6.0f, 1, 1, 8.0f, 8.0f);
+
+    GLuint depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+
+    const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+    GLuint depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+    SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
     Model diamond("models/diamond.obj");
 
@@ -310,6 +334,60 @@ int main()
         //glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        GLfloat rotation = (GLfloat)glfwGetTime() * glm::radians(50.0f);
+
+
+        // ------ SHADOW MAP PASS ------ //
+
+        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightSpaceMatrix;
+
+        GLfloat near_plane = 1.0f, far_plane = 7.5f;
+
+        lightProjection = glm::perspective(45.0f, (GLfloat)SHADOW_WIDTH /
+                                           (GLfloat)SHADOW_HEIGHT, near_plane,
+                                           far_plane);
+
+        lightView = glm::lookAt(pointLightPos[0], glm::vec3(0.0f), glm::vec3(1.0));
+        lightSpaceMatrix = lightProjection * lightView;
+
+        //------ Setup and Render the Floor ------
+
+        depthShader.use();
+
+        depthShader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
+        //glUniformMatrix4fv(glGetUniformLocation(depthShader.getHandle(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+
+        model = glm::mat4();
+        model *= glm::translate(glm::vec3(0.0f, -1.0f, 0.0f));
+        depthShader.setUniform("model", model);
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        floor.render();
+
+        //------ Setup and Render the Diamonds ------
+
+        for(GLint matObjCounter = 0; matObjCounter < 24; ++matObjCounter)
+        {
+            model = glm::mat4();
+            model *= glm::translate(matObjPositions[matObjCounter]);
+            model *= glm::rotate(rotation, vec3(0.0f, 1.0f, 0.0f));
+
+            depthShader.setUniform("model", model);
+            diamond.Draw(depthShader, true);
+        }
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        // ------ Normal Render Pass ------ //
+
+        glViewport(0, 0, screenWidth, screenHeight);
+
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),
                                                 (float)screenWidth/
                                                 (float)screenHeight, 0.1f,
@@ -422,10 +500,6 @@ int main()
 
         diamondShader.setUniform("projection", projection);
         diamondShader.setUniform("view", view);
-
-        GLfloat rotation = (GLfloat)glfwGetTime() * glm::radians(50.0f);
-
-        diamondShader.setUniform("model", model);
         diamondShader.setUniform("viewPos", camera.Position);
 
         for(GLint matObjCounter = 0; matObjCounter < 24; ++matObjCounter)

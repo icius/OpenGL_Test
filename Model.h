@@ -31,10 +31,10 @@ public:
     }
 
     // Draws the model, and thus all its meshes
-    void Draw(GLSLProgram &shader)
+    void Draw(GLSLProgram &shader, bool shadow = false)
     {
         for(GLuint i = 0; i < this->meshes.size(); i++)
-            this->meshes[i].Draw(shader);
+            this->meshes[i].Draw(shader, shadow);
     }
 
 private:
